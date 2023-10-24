@@ -6,52 +6,75 @@ using UnityEngine.Tilemaps;
 
 public class FloodFill : MonoBehaviour
 {
-    public Tilemap tileMap;
-    public TileBase tb;
-    private Queue<Vector3Int> frontier = new Queue<Vector3Int>();
+    public Queue<Vector3Int> frontier = new();
     public Vector3Int startingPoint;
-    public set reached = new set();
-    public Dictionary<Vector3Int, Vector3Int> came_from = new Dictionary<Vector3Int, Vector3Int>();
-    
+    public Vector3Int objective;
+    public Set reached = new Set();
+    public Tilemap tilemap;
+    public TileBase flood;
+    public TileBase path;
+    public float delay;
+    public Dictionary<Vector3Int, Vector3Int> cameFrom = new();
+    public bool canstop;
+    public bool canRun = true;
     private void Update()
-    
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && canRun)
         {
-            ExpandTilemap();
+            FloodFillStartCoroutine();
+            canRun = false;
         }
     }
-    public void ExpandTilemap()
+    public void FloodFillStartCoroutine()
     {
-        Vector3Int start = startingPoint;
-        frontier.Enqueue(start);
-        reached.Add(start);
+        frontier.Enqueue(startingPoint);
+        cameFrom.Add(startingPoint, Vector3Int.zero);
+        StartCoroutine(FloodFillCoroutine());
+    }
+
+    IEnumerator FloodFillCoroutine()
+    {
         while (frontier.Count > 0)
         {
-            var current = frontier.Dequeue();
-            List<Vector3Int> neighbors = GetNeighbors(current);
-            foreach (Vector3Int neighbor in neighbors)
+            Vector3Int current = frontier.Dequeue();
+            Debug.Log(frontier.Count);
+            List<Vector3Int> neighbours = GetNeighbours(current);
+            if (current == objective && canstop) break;
+            foreach (Vector3Int next in neighbours)
             {
-                if (!reached.Set.Contains(neighbor) && tileMap.GetTile(neighbor) != null)
+                if (!reached.set.Contains(next) && tilemap.GetSprite(next) != null)
                 {
-                    if (neighbors != null)
+                    if (next != startingPoint && next != objective) { tilemap.SetTile(next, flood); }
+                    reached.Add(next);
+                    frontier.Enqueue(next);
+                    if (!cameFrom.ContainsKey(next))
                     {
-                        frontier.Enqueue(neighbor);
-                        reached.Add(neighbor);
-                        tileMap.SetTile(neighbor, tb);
+                        cameFrom.Add(next, current);
                     }
                 }
             }
+            yield return new WaitForSeconds(delay);
         }
-        List<Vector3Int> GetNeighbors(Vector3Int current)
-        {
-            List<Vector3Int> neighbors = new List<Vector3Int>();
-            neighbors.Add(new Vector3Int(current.x - 1, current.y, current.z));
-            neighbors.Add(new Vector3Int(current.x + 1, current.y, current.z));
-            neighbors.Add(new Vector3Int(current.x, current.y - 1, current.z));
-            neighbors.Add(new Vector3Int(current.x, current.y + 1, current.z));
+        DrawPath();
+    }
 
-            return neighbors;
+    private List<Vector3Int> GetNeighbours(Vector3Int current)
+    {
+        List<Vector3Int> neighbours = new List<Vector3Int>();
+        neighbours.Add(current + new Vector3Int(0, 1, 0));
+        neighbours.Add(current + new Vector3Int(0, -1, 0));
+        neighbours.Add(current + new Vector3Int(1, 0, 0));
+        neighbours.Add(current + new Vector3Int(-1, 0, 0));
+        return neighbours;
+    }
+
+    private void DrawPath()
+    {
+        Vector3Int tile = cameFrom[objective];
+        while (tile != startingPoint)
+        {
+            tilemap.SetTile(tile, path);
+            tile = cameFrom[tile];
         }
     }
 }

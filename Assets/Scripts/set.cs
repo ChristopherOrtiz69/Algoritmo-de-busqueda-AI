@@ -2,21 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class set : MonoBehaviour
+public class Set
 {
-    //public List<T>
-    public List<Vector3Int> Set;
+    public List<Vector3> set = new List<Vector3>();
 
-
-  public void Add(Vector3Int current)
+    public bool Add(Vector3 element)
     {
-        if (!Set.Contains(current))
+        if (!set.Contains(element))
         {
-            Debug.Log("Agregue un neighbor " + current);
-            Set.Add(current);
+            set.Add(element);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
-
-
-
 }
